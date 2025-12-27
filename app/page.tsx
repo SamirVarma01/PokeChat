@@ -14,7 +14,7 @@ export default function HomePage() {
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-            VGChat
+            PokeChat
           </span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
@@ -280,7 +280,7 @@ export default function HomePage() {
                   Ready to Elevate Your VGC Game?
                 </h2>
                 <p className="max-w-[800px] text-blue-100 text-lg md:text-xl lg:text-2xl leading-relaxed">
-                  Join thousands of competitive players who trust VGChat for their team building and analysis needs.
+                  Join thousands of competitive players who trust PokeChat for their team building and analysis needs.
                 </p>
               </div>
               <div className="flex flex-col gap-4 min-[400px]:flex-row pt-4">
@@ -308,7 +308,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-gray-50">
-        <p className="text-xs text-gray-600">© 2025 VGChat. Built for the competitive Pokemon community.</p>
+        <p className="text-xs text-gray-600">© 2025 PokeChat. Built for the competitive Pokemon community.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="#" className="text-xs hover:underline underline-offset-4 text-gray-600">
             Privacy Policy

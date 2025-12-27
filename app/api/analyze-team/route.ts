@@ -3,11 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { team } = body;
+    const { team, apiKey } = body;
 
     if (!team) {
       return NextResponse.json(
         { error: 'Team data is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'OpenAI API key is required' },
         { status: 400 }
       );
     }
@@ -18,7 +25,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ team }),
+      body: JSON.stringify({ team, apiKey }),
     });
 
     if (!backendResponse.ok) {

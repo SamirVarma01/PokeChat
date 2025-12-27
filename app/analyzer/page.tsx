@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, LinkIcon, Zap, Shield, Target, AlertTriangle, CheckCircle, TrendingUp, ArrowLeft, X } from "lucide-react"
+import { Upload, LinkIcon, Zap, Shield, Target, AlertTriangle, CheckCircle, TrendingUp, ArrowLeft, X, Key } from "lucide-react"
 import Link from "next/link"
 import { validatePokemonTeam, type PokemonTeam } from "@/lib/team-validation"
 import { analyzeTeam, type LLMAnalysisResult } from "@/lib/api"
+
+const API_KEY_STORAGE_KEY = "openai_api_key"
 
 export default function TeamAnalyzer() {
   const [teamData, setTeamData] = useState("")
@@ -23,6 +25,26 @@ export default function TeamAnalyzer() {
   const [isValidating, setIsValidating] = useState(false)
   const [isFetchingUrl, setIsFetchingUrl] = useState(false)
   const [fetchedTeamData, setFetchedTeamData] = useState("")
+  const [apiKey, setApiKey] = useState("")
+  const [showApiKey, setShowApiKey] = useState(false)
+
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY)
+    if (storedKey) {
+      setApiKey(storedKey)
+    }
+  }, [])
+
+  // Save API key to localStorage when it changes
+  const handleApiKeyChange = (value: string) => {
+    setApiKey(value)
+    if (value) {
+      localStorage.setItem(API_KEY_STORAGE_KEY, value)
+    } else {
+      localStorage.removeItem(API_KEY_STORAGE_KEY)
+    }
+  }
 
   const validateTeam = (teamText: string) => {
     setIsValidating(true)
@@ -75,6 +97,11 @@ export default function TeamAnalyzer() {
       return
     }
 
+    if (!apiKey || !apiKey.trim()) {
+      setValidationErrors(["Please enter your OpenAI API key to analyze teams"])
+      return
+    }
+
     // Validate team format first
     if (!validateTeam(teamToAnalyze)) {
       return
@@ -84,8 +111,14 @@ export default function TeamAnalyzer() {
     setAnalysisResult(null)
 
     try {
-      const result = await analyzeTeam(teamToAnalyze)
-      setAnalysisResult(result)
+      const result = await analyzeTeam(teamToAnalyze, apiKey)
+      if (result.error) {
+        setValidationErrors([result.error])
+        setAnalysisResult(null)
+      } else {
+        setAnalysisResult(result)
+        setValidationErrors([])
+      }
     } catch (error) {
       console.error('Analysis failed:', error)
       setValidationErrors(['Failed to analyze team. Please try again.'])
@@ -120,7 +153,7 @@ export default function TeamAnalyzer() {
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-            VGChat
+            PokeChat
           </span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
@@ -177,7 +210,42 @@ export default function TeamAnalyzer() {
                 </CardTitle>
                 <CardDescription>Paste your team from Pokemon Showdown or provide a Pokepaste link</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* API Key Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    OpenAI API Key
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type={showApiKey ? "text" : "password"}
+                      placeholder="sk-..."
+                      value={apiKey}
+                      onChange={(e) => handleApiKeyChange(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                    >
+                      {showApiKey ? <X className="h-4 w-4" /> : <Key className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Your API key is stored locally in your browser and only used to make API calls to OpenAI. It is never stored on our servers. Get your key from{" "}
+                    <a
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      OpenAI Platform
+                    </a>
+                  </p>
+                </div>
                 <Tabs defaultValue="paste" className="w-full" onValueChange={() => clearErrors()}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="paste">Team Data</TabsTrigger>
@@ -250,7 +318,7 @@ export default function TeamAnalyzer() {
                 </Tabs>
                 <Button
                   onClick={handleAnalyze}
-                  disabled={isAnalyzing || isValidating || (!teamData && !fetchedTeamData)}
+                  disabled={isAnalyzing || isValidating || (!teamData && !fetchedTeamData) || !apiKey.trim()}
                   className="w-full mt-4"
                 >
                   {isAnalyzing ? (

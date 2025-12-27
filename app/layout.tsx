@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: 'PokeChat - Pokemon VGC Team Analysis & Meta Insights',
+  description: 'Professional Pokemon VGC team analysis platform with AI-powered insights, meta trends, and strategic planning tools for competitive players.',
+  generator: 'PokeChat',
 }
 
 export default function RootLayout({
@@ -14,6 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+      </head>
       <body>{children}</body>
     </html>
   )

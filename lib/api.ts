@@ -20,19 +20,20 @@ export interface LLMAnalysisResult {
 
 export interface AnalyzeTeamRequest {
   team: string;
+  apiKey?: string;
 }
 
 /**
  * Analyzes a Pokemon team using the LLM service
  */
-export async function analyzeTeam(teamData: string): Promise<LLMAnalysisResult> {
+export async function analyzeTeam(teamData: string, apiKey: string): Promise<LLMAnalysisResult> {
   try {
     const response = await fetch('/api/analyze-team', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ team: teamData }),
+      body: JSON.stringify({ team: teamData, apiKey }),
     });
 
     if (!response.ok) {

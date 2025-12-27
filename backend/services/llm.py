@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 from typing import Dict, List, Optional
 
 load_dotenv()
-# Initialize OpenAI client
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def parse_showdown_team(team_text: str) -> List[Dict]:
     """Parse a Pokemon Showdown format team into structured data."""
@@ -112,9 +110,11 @@ def parse_showdown_team(team_text: str) -> List[Dict]:
     
     return pokemon_list
 
-def analyze_team_with_llm(team_data: str) -> dict:
+def analyze_team_with_llm(team_data: str, api_key: str) -> dict:
     """Analyze a Pokemon team using OpenAI GPT-4."""
     try:
+        # Create OpenAI client with user-provided API key
+        client = openai.OpenAI(api_key=api_key)
         # Parse the team
         pokemon_list = parse_showdown_team(team_data)
         
@@ -230,6 +230,24 @@ def analyze_team_with_llm(team_data: str) -> dict:
         
         return analysis
         
+    except openai.AuthenticationError as e:
+        return {
+            "error": "Invalid OpenAI API key. Please check your API key and try again.",
+            "grade": None,
+            "strengths": [],
+            "weaknesses": [],
+            "threats": [],
+            "suggestions": []
+        }
+    except openai.RateLimitError as e:
+        return {
+            "error": "OpenAI API rate limit exceeded. Please try again later.",
+            "grade": None,
+            "strengths": [],
+            "weaknesses": [],
+            "threats": [],
+            "suggestions": []
+        }
     except Exception as e:
         return {
             "error": f"Analysis failed: {str(e)}",
