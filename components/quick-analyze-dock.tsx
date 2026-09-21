@@ -84,7 +84,7 @@ export function QuickAnalyzeDock() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-space-sm">
         <span className="font-label-mono text-label-mono text-text-tertiary">
-          No signup · Your API key stays in your browser
+          No signup · Free to run
         </span>
         <button
           type="button"

@@ -36,6 +36,15 @@ class TeamCore:
 
 
 @dataclass
+class TopTeam:
+    rank: int
+    author: str
+    record: str
+    tournament: str
+    pokemon: List[str]
+
+
+@dataclass
 class MetaSnapshot:
     format_name: str
     format_code: str
@@ -43,6 +52,7 @@ class MetaSnapshot:
     data_date: str
     pokemon: List[PokemonUsage] = field(default_factory=list)
     cores: List[TeamCore] = field(default_factory=list)
+    top_teams: List[TopTeam] = field(default_factory=list)
     fetched_at: float = 0.0
 
     def to_dict(self) -> Dict:
@@ -55,9 +65,16 @@ class MetaSnapshot:
             },
             "pokemon": [asdict(p) for p in self.pokemon],
             "cores": [asdict(c) for c in self.cores],
+            "top_teams": [asdict(t) for t in self.top_teams],
             "fetched_at": self.fetched_at,
             "source_url": SOURCE_URL,
         }
+
+
+@dataclass
+class UsageEntry:
+    name: str
+    percent: float
 
 
 @dataclass
@@ -67,11 +84,28 @@ class PokemonDetail:
     resistances: List[str] = field(default_factory=list)
     immunities: List[str] = field(default_factory=list)
     base_stats: Dict[str, int] = field(default_factory=dict)
-    common_moves: List[str] = field(default_factory=list)
+    common_moves: List[UsageEntry] = field(default_factory=list)
+    common_items: List[UsageEntry] = field(default_factory=list)
+    common_abilities: List[UsageEntry] = field(default_factory=list)
+    common_teammates: List[UsageEntry] = field(default_factory=list)
 
     @property
     def base_speed(self) -> Optional[int]:
         return self.base_stats.get("Speed")
+
+    def to_dict(self) -> Dict:
+        return {
+            "name": self.name,
+            "weaknesses": self.weaknesses,
+            "resistances": self.resistances,
+            "immunities": self.immunities,
+            "base_stats": {k: v for k, v in self.base_stats.items() if k != "BST"},
+            "bst": self.base_stats.get("BST"),
+            "common_moves": [asdict(e) for e in self.common_moves],
+            "common_items": [asdict(e) for e in self.common_items],
+            "common_abilities": [asdict(e) for e in self.common_abilities],
+            "common_teammates": [asdict(e) for e in self.common_teammates],
+        }
 
 
 _cache: Optional[MetaSnapshot] = None
@@ -156,6 +190,35 @@ def _parse_cores(markdown: str) -> List[TeamCore]:
     return cores
 
 
+def _parse_top_teams(markdown: str) -> List[TopTeam]:
+    section = _section(markdown, "Recent Top Teams")
+    teams: List[TopTeam] = []
+
+    for line in section.splitlines():
+        line = line.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) < 5 or not cells[0].isdigit():
+            continue
+
+        members = [m.strip() for m in cells[4].split(",") if m.strip()]
+        if not members:
+            continue
+
+        teams.append(
+            TopTeam(
+                rank=int(cells[0]),
+                author=cells[1].replace("\\|", "|"),
+                record=cells[2],
+                tournament=cells[3].replace("\\|", "|"),
+                pokemon=members,
+            )
+        )
+
+    return teams
+
+
 def parse_snapshot(markdown: str) -> MetaSnapshot:
     pokemon = _parse_usage(markdown)
     if not pokemon:
@@ -168,6 +231,7 @@ def parse_snapshot(markdown: str) -> MetaSnapshot:
         data_date=_field(markdown, "Data Date"),
         pokemon=pokemon,
         cores=_parse_cores(markdown),
+        top_teams=_parse_top_teams(markdown),
         fetched_at=time.time(),
     )
 
@@ -180,6 +244,16 @@ def _parse_type_list(cell: str) -> List[str]:
         if name and name.lower() not in {"none", "no types"}:
             types.append(name)
     return types
+
+
+def _parse_percent_list(markdown: str, heading: str) -> List[UsageEntry]:
+    """Parse '- **Name**: 12.34%' bullet lists."""
+    entries: List[UsageEntry] = []
+    for match in re.finditer(r"^- \*\*(.+?)\*\*:\s*([\d.]+)%", _section(markdown, heading), re.MULTILINE):
+        value = _to_float(match.group(2))
+        if value is not None:
+            entries.append(UsageEntry(name=match.group(1).strip(), percent=value))
+    return entries
 
 
 def parse_detail(markdown: str, name: str) -> PokemonDetail:
@@ -198,8 +272,10 @@ def parse_detail(markdown: str, name: str) -> PokemonDetail:
         elif "immune" in label:
             detail.immunities = _parse_type_list(cells[1])
 
-    for move_match in re.finditer(r"^- \*\*(.+?)\*\*: [\d.]+%", _section(markdown, "Common Moves"), re.MULTILINE):
-        detail.common_moves.append(move_match.group(1))
+    detail.common_moves = _parse_percent_list(markdown, "Common Moves")
+    detail.common_items = _parse_percent_list(markdown, "Common Items")
+    detail.common_abilities = _parse_percent_list(markdown, "Common Abilities")
+    detail.common_teammates = _parse_percent_list(markdown, "Common Teammates")
 
     stats_block = re.search(r"### What are the base stats for .+?\?\n(.*?)(?:\n\n|\n---)", markdown, re.DOTALL)
     if stats_block:

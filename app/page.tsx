@@ -85,8 +85,8 @@ export default async function HomePage() {
                   <div className="font-stat-metric text-stat-metric text-gold-tier-s mt-0.5">Bring 6, pick 4</div>
                 </div>
                 <div>
-                  <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Engine</div>
-                  <div className="font-stat-metric text-stat-metric text-status-grass mt-0.5">Your own API key</div>
+                  <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Cost</div>
+                  <div className="font-stat-metric text-stat-metric text-status-grass mt-0.5">Free to use</div>
                 </div>
               </div>
             </div>
@@ -260,18 +260,18 @@ export default async function HomePage() {
             <div className="bg-surface-card p-space-lg rounded-xl shadow-lg flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center text-purple-tier-a mb-space-md shadow-sm">
-                  <Layers className="w-6 h-6" />
+                  <Gauge className="w-6 h-6" />
                 </div>
-                <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Team Builder</div>
+                <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Format Rules Engine</div>
                 <p className="font-body-md text-body-md text-text-secondary mb-space-md">
-                  A slot-by-slot builder with coverage and speed-tier feedback as you go. Not shipped yet — the analyzer
-                  and meta pages are live today.
+                  Type coverage, base speed tiers, the item clause and the one-Mega-per-battle limit are all computed
+                  from live data — no AI guesswork involved.
                 </p>
               </div>
               <div className="bg-surface-elevated/60 p-space-md rounded-lg mt-space-sm">
-                <div className="font-badge-tag text-badge-tag text-text-tertiary mb-space-xs uppercase">Status</div>
+                <div className="font-badge-tag text-badge-tag text-text-tertiary mb-space-xs uppercase">Checks</div>
                 <div className="bg-surface-canvas p-2 rounded text-center font-label-mono text-label-mono text-purple-tier-a">
-                  In development
+                  Coverage · Speed · Legality
                 </div>
               </div>
             </div>
@@ -288,7 +288,7 @@ export default async function HomePage() {
           <h2 className="font-headline-lg text-headline-lg text-text-primary">Your VGC strategy hub</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-lg">
           <Link
             href="/analyzer"
             className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between hover:bg-surface-elevated transition-colors group"
@@ -358,26 +358,6 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-space-md">
-                <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center text-purple-tier-a transition-colors">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <span className="font-badge-tag text-badge-tag px-2 py-0.5 rounded bg-surface-canvas text-text-tertiary">
-                  SOON
-                </span>
-              </div>
-              <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Team Builder</div>
-              <p className="font-body-sm text-body-sm text-text-secondary mb-space-md">
-                Build a roster slot by slot with live coverage and speed feedback.
-              </p>
-            </div>
-            <div className="bg-surface-canvas p-space-sm rounded-lg font-label-mono text-label-mono flex items-center justify-between">
-              <span className="text-text-tertiary">Status</span>
-              <span className="text-purple-tier-a font-semibold">In development</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -407,7 +387,7 @@ export default async function HomePage() {
                   <span>•</span>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-gold-tier-s" />
-                    <span>Bring your own OpenAI key</span>
+                    <span>No signup, no API key</span>
                   </div>
                 </div>
               </div>

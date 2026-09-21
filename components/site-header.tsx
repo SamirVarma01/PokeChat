@@ -13,6 +13,7 @@ export function SiteHeader({ format }: { format: FormatInfo }) {
     { href: "/", label: "Overview", badge: null, badgeClass: "" },
     { href: "/analyzer", label: "Team Analyzer", badge: "AI", badgeClass: "bg-threat-crimson/20 text-threat-crimson" },
     { href: "/meta", label: "Meta Trends", badge, badgeClass: "bg-primary-container/20 text-primary-container" },
+    { href: "/teams", label: "Top Teams", badge: null, badgeClass: "" },
   ]
 
   return (
@@ -56,12 +57,6 @@ export function SiteHeader({ format }: { format: FormatInfo }) {
                 </Link>
               )
             })}
-            <span className="font-label-md text-label-md px-space-md py-space-sm rounded-lg text-text-tertiary flex items-center gap-space-xs cursor-not-allowed">
-              Team Builder
-              <span className="font-badge-tag text-badge-tag px-1.5 py-0.5 rounded bg-purple-tier-a/20 text-purple-tier-a">
-                Soon
-              </span>
-            </span>
           </nav>
         </div>
 

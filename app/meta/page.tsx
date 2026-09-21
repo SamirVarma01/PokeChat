@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { AlertTriangle, BarChart3, Crown, Hash, Layers, Link2, RefreshCw, Search, TrendingUp } from "lucide-react"
+import Link from "next/link"
 import { formatBadge, RULESET_SUMMARY } from "@/lib/format"
+import { pokemonHref } from "@/lib/pokemon-types"
 
 interface PokemonUsage {
   name: string
@@ -301,8 +303,9 @@ export default function MetaAnalysis() {
                   {topSix.map((pokemon, index) => {
                     const tier = tierFor(pokemon.usage)
                     return (
-                      <div
+                      <Link
                         key={pokemon.name}
+                        href={pokemonHref(pokemon.name)}
                         className="bg-surface-card rounded-xl p-space-md flex flex-col gap-space-sm shadow-xl hover:-translate-y-1 transition-transform relative overflow-hidden"
                       >
                         <div className={`absolute top-0 right-0 px-3 py-1 font-stat-metric text-xs font-bold rounded-bl-lg shadow-md ${tier.chip}`}>
@@ -337,7 +340,7 @@ export default function MetaAnalysis() {
                             </span>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>
@@ -385,8 +388,13 @@ export default function MetaAnalysis() {
                           <td className={`py-3.5 px-space-md font-stat-metric font-bold ${tier.text}`}>
                             #{String(pokemon.rank).padStart(2, "0")}
                           </td>
-                          <td className="py-3.5 px-space-md font-headline-sm text-sm text-text-primary font-bold">
-                            {pokemon.name}
+                          <td className="py-3.5 px-space-md">
+                            <Link
+                              href={pokemonHref(pokemon.name)}
+                              className="font-headline-sm text-sm text-text-primary font-bold hover:text-synergy-cyan transition-colors"
+                            >
+                              {pokemon.name}
+                            </Link>
                           </td>
                           <td className="py-3.5 px-space-md text-center">
                             <span className={`px-2 py-0.5 rounded font-bold font-badge-tag ${tier.chip}`}>
