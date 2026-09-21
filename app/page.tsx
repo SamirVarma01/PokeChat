@@ -1,326 +1,423 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Zap, Shield, Target, TrendingUp, Users } from "lucide-react"
 import Link from "next/link"
+import {
+  AlertTriangle,
+  ArrowRight,
+  Brain,
+  CheckCircle2,
+  Gauge,
+  Layers,
+  LineChart,
+  Link2,
+  ListOrdered,
+  Sparkles,
+  Terminal,
+  TrendingUp,
+} from "lucide-react"
+import { QuickAnalyzeDock } from "@/components/quick-analyze-dock"
+import { formatBadge, getCurrentFormat, RULESET_SUMMARY } from "@/lib/format"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const format = await getCurrentFormat()
+  const badge = formatBadge(format.name)
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
-      {/* Header */}
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <Link href="/" className="flex items-center justify-center">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-red-600 rounded-full flex items-center justify-center">
-            <Zap className="h-5 w-5 text-white" />
+    <div className="flex flex-col w-full">
+      {/* HERO */}
+      <div className="relative w-full overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[340px] bg-gradient-to-b from-synergy-cyan/15 via-primary-container/5 to-transparent blur-3xl pointer-events-none" />
+
+        <section className="max-w-[1600px] mx-auto px-margin md:px-margin-desktop pt-space-xl pb-space-2xl w-full relative">
+          <div className="inline-flex items-center gap-space-sm px-space-md py-space-xs rounded-full bg-surface-card shadow-sm mb-space-lg">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-threat-crimson opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-threat-crimson" />
+            </span>
+            <span className="font-label-mono text-label-mono uppercase tracking-wider text-text-primary">
+              Tracking {format.name} · usage synced from Pikalytics
+            </span>
+            <span className="font-badge-tag text-badge-tag px-1.5 py-0.5 rounded bg-surface-elevated text-synergy-cyan">
+              {badge}
+            </span>
           </div>
-          <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-            PokeChat
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="/analyzer" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Team Analyzer
-          </Link>
-          <Link href="/meta" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Meta Analysis
-          </Link>
-          <Link href="/builder" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Team Builder
-          </Link>
 
-        </nav>
-      </header>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+            {/* LEFT: copy + actions */}
+            <div className="lg:col-span-6 flex flex-col items-start">
+              <div className="font-label-mono text-label-mono uppercase tracking-widest text-synergy-cyan mb-space-xs flex items-center gap-space-xs">
+                <Terminal className="w-4 h-4" />
+                <span>AI Battle-Room Intelligence</span>
+              </div>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <Badge variant="secondary" className="w-fit">
-                    <Zap className="w-3 h-3 mr-1" />
-                    Powered by AI & Smogon Data
-                  </Badge>
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Master Pokemon VGC with{" "}
-                    <span className="bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-                      AI-Powered
-                    </span>{" "}
-                    Team Analysis
-                  </h1>
-                  <p className="max-w-[600px] text-gray-600 md:text-xl">
-                    Import your teams from Showdown or Pokepaste and get instant strategic feedback. Identify
-                    weaknesses, discover threats, and optimize your team composition with AI trained on
-                    championship-level VGC data.
-                  </p>
+              <h1 className="font-headline-xl text-headline-xl text-text-primary tracking-tight mb-space-md leading-tight">
+                Master Your VGC Team With AI-Powered Analysis
+              </h1>
+
+              <p className="font-body-lg text-body-lg text-text-secondary mb-space-xl max-w-xl">
+                Paste a Pokémon Showdown export or a Pokepaste link and get a structured read on your team: overall
+                grade, the threats that beat you, what your core does well, and what to change before the next
+                tournament.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-space-md w-full sm:w-auto">
+                <Link
+                  href="/analyzer"
+                  className="inline-flex items-center justify-center gap-space-sm bg-primary-container text-on-primary-container font-label-md text-label-md px-space-lg py-3 rounded-lg shadow-xl shadow-primary-container/20 hover:brightness-110 transition-all"
+                >
+                  <span>Analyze My Team</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/meta"
+                  className="inline-flex items-center justify-center gap-space-sm bg-surface-card hover:bg-surface-elevated text-text-primary font-label-md text-label-md px-space-lg py-3 rounded-lg shadow-sm transition-all"
+                >
+                  <LineChart className="w-4 h-4 text-synergy-cyan" />
+                  <span>View Meta Trends</span>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-3 gap-space-md mt-space-2xl pt-space-md w-full max-w-lg bg-surface-card/60 p-space-md rounded-xl backdrop-blur-md">
+                <div>
+                  <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Format</div>
+                  <div className="font-stat-metric text-stat-metric text-synergy-cyan mt-0.5">{format.name}</div>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/analyzer">
-                    <Button
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                    >
-                      <Target className="w-4 h-4 mr-2" />
-                      Analyze My Team
-                    </Button>
-                  </Link>
-                  <Link href="/meta">
-                    <Button variant="outline" size="lg">
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      View Meta Analysis
-                    </Button>
-                  </Link>
+                <div>
+                  <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Ruleset</div>
+                  <div className="font-stat-metric text-stat-metric text-gold-tier-s mt-0.5">Bring 6, pick 4</div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Free to use</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>Updated daily</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span>Tournament ready</span>
-                  </div>
+                <div>
+                  <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Engine</div>
+                  <div className="font-stat-metric text-stat-metric text-status-grass mt-0.5">Your own API key</div>
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-                <div className="relative">
-                  <div className="w-80 h-80 bg-gradient-to-br from-blue-400 via-purple-500 to-red-500 rounded-full opacity-20 blur-3xl absolute -top-10 -left-10"></div>
-                  <Card className="relative bg-white/80 backdrop-blur-sm border-2 p-10 w-[380px] sm:w-[480px] md:w-[540px] lg:w-[600px] shadow-xl">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-2xl md:text-3xl">
-                        <Shield className="w-7 h-7 md:w-9 md:h-9 text-blue-600" />
-                        Team Analysis Preview
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6 text-lg md:text-xl">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-medium">Team Synergy</span>
-                          <Badge variant="secondary" className="text-lg px-4 py-2">85%</Badge>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3 md:h-4">
-                          <div
-                            className="bg-gradient-to-r from-green-500 to-blue-500 h-3 md:h-4 rounded-full"
-                            style={{ width: "85%" }}
-                          ></div>
-                        </div>
+            </div>
+
+            {/* RIGHT: example report card */}
+            <div className="lg:col-span-6 w-full">
+              <div className="bg-surface-card rounded-xl p-space-lg shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-synergy-cyan via-purple-tier-a to-threat-crimson" />
+
+                <div className="flex items-center justify-between gap-space-md pb-space-md">
+                  <div className="flex items-center gap-space-sm">
+                    <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center">
+                      <Layers className="w-5 h-5 text-synergy-cyan" />
+                    </div>
+                    <div>
+                      <div className="font-headline-sm text-headline-sm text-text-primary">Team Report</div>
+                      <div className="font-label-mono text-label-mono text-text-tertiary uppercase">
+                        Example output · not your team
                       </div>
-                      <div className="space-y-2">
-                        <div className="text-lg font-medium">Identified Threats</div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="destructive" className="text-base px-3 py-1">Landorus-T</Badge>
-                          <Badge variant="destructive" className="text-base px-3 py-1">Incineroar</Badge>
-                          <Badge variant="destructive" className="text-base px-3 py-1">Flutter Mane</Badge>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-lg font-medium">Recommendations</div>
-                        <div className="text-base text-gray-600 space-y-1">
-                          <div>• Consider adding Trick Room support</div>
-                          <div>• Weak to common Electric moves</div>
-                          <div>• Strong late-game potential</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-space-sm bg-surface-elevated px-space-md py-space-xs rounded-xl shadow-inner">
+                    <div className="text-right">
+                      <div className="font-badge-tag text-badge-tag text-text-tertiary uppercase">Grade</div>
+                      <div className="font-stat-metric text-stat-metric text-synergy-cyan">Overall</div>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center font-headline-md text-headline-md text-primary-container shadow-[0_0_12px_rgba(0,229,255,0.3)]">
+                      B
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-space-sm my-space-md">
+                  <div className="p-space-md rounded-lg bg-surface-elevated">
+                    <div className="flex items-center justify-between text-threat-crimson">
+                      <AlertTriangle className="w-5 h-5" />
+                      <span className="font-stat-display text-stat-display leading-none">4</span>
+                    </div>
+                    <span className="font-label-mono text-label-mono font-semibold text-threat-crimson block mt-2">
+                      Threats
+                    </span>
+                  </div>
+                  <div className="p-space-md rounded-lg bg-surface-elevated">
+                    <div className="flex items-center justify-between text-status-grass">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="font-stat-display text-stat-display leading-none">6</span>
+                    </div>
+                    <span className="font-label-mono text-label-mono font-semibold text-status-grass block mt-2">
+                      Strengths
+                    </span>
+                  </div>
+                  <div className="p-space-md rounded-lg bg-surface-elevated">
+                    <div className="flex items-center justify-between text-synergy-cyan">
+                      <Brain className="w-5 h-5" />
+                      <span className="font-stat-display text-stat-display leading-none">5</span>
+                    </div>
+                    <span className="font-label-mono text-label-mono font-semibold text-synergy-cyan block mt-2">
+                      Coach Tips
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-surface-elevated/40 p-space-md rounded-lg mb-space-md">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-label-mono text-label-mono text-text-secondary flex items-center gap-1">
+                      <Gauge className="w-4 h-4 text-synergy-cyan" />
+                      Speed control &amp; pivot coverage
+                    </span>
+                    <span className="font-stat-metric text-stat-metric text-synergy-cyan">Strong</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-surface-canvas overflow-hidden flex">
+                    <div className="h-full bg-gradient-to-r from-synergy-cyan to-primary-container rounded-full w-[82%]" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-space-xs">
+                  <div className="font-badge-tag text-badge-tag uppercase tracking-wider text-text-tertiary mb-1">
+                    Sample findings
+                  </div>
+                  <div className="flex flex-wrap gap-space-xs">
+                    <span className="inline-flex items-center gap-1 px-space-sm py-1 rounded bg-threat-crimson/15 text-threat-crimson font-label-mono text-label-mono">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span>No answer to Trick Room setup</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-space-sm py-1 rounded bg-status-grass/15 text-status-grass font-label-mono text-label-mono">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Redirection + Fake Out core intact</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-space-sm py-1 rounded bg-gold-tier-s/15 text-gold-tier-s font-label-mono text-label-mono">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Fairy coverage gap</span>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
+      </div>
 
-        {/* Features Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-50">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Everything You Need to Dominate VGC</h2>
-                <p className="max-w-[900px] text-gray-600 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  From team analysis to meta insights, we provide comprehensive tools for competitive Pokemon players.
+      {/* FEATURE GRID */}
+      <section className="w-full bg-surface-canvas py-space-2xl">
+        <div className="max-w-[1600px] mx-auto px-margin md:px-margin-desktop">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-space-xl gap-space-md">
+            <div>
+              <div className="font-badge-tag text-badge-tag uppercase tracking-widest text-synergy-cyan mb-space-xs">
+                What it does
+              </div>
+              <h2 className="font-headline-lg text-headline-lg text-text-primary">Built for Champions doubles</h2>
+            </div>
+            <p className="font-body-md text-body-md text-text-tertiary max-w-md">
+              Import a team, read the report, cross-check it against what the ladder is actually playing.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+            <div className="bg-surface-card p-space-lg rounded-xl shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center text-synergy-cyan mb-space-md shadow-sm">
+                  <Brain className="w-6 h-6" />
+                </div>
+                <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">
+                  Smart Team Analysis
+                </div>
+                <p className="font-body-md text-body-md text-text-secondary mb-space-md">
+                  Paste a Showdown export and get a graded breakdown: the archetypes that threaten you, the strengths
+                  worth protecting, and concrete changes to make.
                 </p>
               </div>
+              <div className="bg-surface-elevated/60 p-space-md rounded-lg mt-space-sm flex flex-col gap-space-xs font-label-mono text-label-mono">
+                <div className="flex items-center justify-between text-text-tertiary">
+                  <span>Threats</span>
+                  <span className="text-threat-crimson">Ranked by severity</span>
+                </div>
+                <div className="flex items-center justify-between text-text-tertiary">
+                  <span>Strengths</span>
+                  <span className="text-status-grass">With reasoning</span>
+                </div>
+                <div className="flex items-center justify-between text-text-tertiary">
+                  <span>Suggestions</span>
+                  <span className="text-synergy-cyan">Actionable</span>
+                </div>
+              </div>
             </div>
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 sm:grid-cols-3 sm:gap-8">
-              <Card className="relative overflow-hidden">
-                <CardHeader>
-                  <Target className="h-10 w-10 text-blue-600" />
-                  <CardTitle>Smart Team Analysis</CardTitle>
-                  <CardDescription>
-                    Import from Showdown or Pokepaste and get instant AI-powered feedback on your team composition.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Identify type coverage gaps</li>
-                    <li>• Discover common threats</li>
-                    <li>• Get strategic recommendations</li>
-                    <li>• Speed tier analysis</li>
-                  </ul>
-                </CardContent>
-              </Card>
 
-              <Card className="relative overflow-hidden">
-                <CardHeader>
-                  <TrendingUp className="h-10 w-10 text-green-600" />
-                  <CardTitle>Live Meta Tracking</CardTitle>
-                  <CardDescription>
-                    Stay ahead of the competition with real-time meta analysis and usage statistics.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Top Pokemon usage rates</li>
-                    <li>• Trending strategies</li>
-                    <li>• Tournament results</li>
-                    <li>• Format-specific insights</li>
-                  </ul>
-                </CardContent>
-              </Card>
+            <div className="bg-surface-card p-space-lg rounded-xl shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center text-gold-tier-s mb-space-md shadow-sm">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Meta Usage Tracking</div>
+                <p className="font-body-md text-body-md text-text-secondary mb-space-md">
+                  Full usage rankings for the current format, tiered from S down to B, so you know what your team has to
+                  beat on ladder and at events.
+                </p>
+              </div>
+              <div className="bg-surface-elevated/60 p-space-md rounded-lg mt-space-sm">
+                <div className="flex items-center justify-between font-label-mono text-label-mono text-text-tertiary pb-1">
+                  <span>ACTIVE DATASET</span>
+                  <span className="text-gold-tier-s">{badge}</span>
+                </div>
+                <div className="flex items-center justify-between gap-space-sm bg-surface-canvas p-2 rounded">
+                  <span className="font-label-md text-label-md text-text-primary truncate">{format.name}</span>
+                  <span className="font-badge-tag text-badge-tag text-synergy-cyan bg-surface-elevated px-2 py-0.5 rounded flex-shrink-0">
+                    {RULESET_SUMMARY}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-              <Card className="relative overflow-hidden">
-                <CardHeader>
-                  <Users className="h-10 w-10 text-purple-600" />
-                  <CardTitle>Team Builder Pro</CardTitle>
-                  <CardDescription>
-                    Build and optimize teams with our advanced team building tools and suggestions.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Drag & drop team builder</li>
-                    <li>• Auto-complete suggestions</li>
-                    <li>• Synergy calculator</li>
-                    <li>• Export to Showdown</li>
-                  </ul>
-                </CardContent>
-              </Card>
+            <div className="bg-surface-card p-space-lg rounded-xl shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-lg bg-surface-elevated flex items-center justify-center text-purple-tier-a mb-space-md shadow-sm">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Team Builder</div>
+                <p className="font-body-md text-body-md text-text-secondary mb-space-md">
+                  A slot-by-slot builder with coverage and speed-tier feedback as you go. Not shipped yet — the analyzer
+                  and meta pages are live today.
+                </p>
+              </div>
+              <div className="bg-surface-elevated/60 p-space-md rounded-lg mt-space-sm">
+                <div className="font-badge-tag text-badge-tag text-text-tertiary mb-space-xs uppercase">Status</div>
+                <div className="bg-surface-canvas p-2 rounded text-center font-label-mono text-label-mono text-purple-tier-a">
+                  In development
+                </div>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* VGC Strategy Hub */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Your VGC Strategy Hub</h2>
-              <p className="max-w-[600px] text-gray-600 md:text-xl/relaxed">
-                Everything you need to build, analyze, and master your competitive Pokemon teams.
+      {/* STRATEGY HUB */}
+      <section className="max-w-[1600px] mx-auto px-margin md:px-margin-desktop py-space-2xl w-full">
+        <div className="flex flex-col mb-space-xl">
+          <div className="font-badge-tag text-badge-tag uppercase tracking-widest text-synergy-cyan mb-space-xs">
+            War room
+          </div>
+          <h2 className="font-headline-lg text-headline-lg text-text-primary">Your VGC strategy hub</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg">
+          <Link
+            href="/analyzer"
+            className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between hover:bg-surface-elevated transition-colors group"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-space-md">
+                <div className="w-10 h-10 rounded-lg bg-surface-elevated group-hover:bg-primary-container/20 flex items-center justify-center text-synergy-cyan transition-colors">
+                  <Brain className="w-5 h-5" />
+                </div>
+                <span className="font-badge-tag text-badge-tag px-2 py-0.5 rounded bg-surface-canvas text-text-tertiary">
+                  ANALYSIS
+                </span>
+              </div>
+              <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Team Analyzer</div>
+              <p className="font-body-sm text-body-sm text-text-secondary mb-space-md">
+                Graded report on threats, strengths, weaknesses and fixes for any Showdown export.
               </p>
             </div>
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Target className="h-8 w-8 text-blue-600" />
-                    <div>
-                      <h3 className="font-semibold">Team Analyzer</h3>
-                      <p className="text-sm text-gray-600">AI-powered strategic insights</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="h-8 w-8 text-green-600" />
-                    <div>
-                      <h3 className="font-semibold">Meta Analysis</h3>
-                      <p className="text-sm text-gray-600">Current tournament trends</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Users className="h-8 w-8 text-purple-600" />
-                    <div>
-                      <h3 className="font-semibold">Team Builder</h3>
-                      <p className="text-sm text-gray-600">Create winning combinations</p>
-                    </div>
-                  </div>
-                </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-8 w-8 text-orange-600" />
-                    <div>
-                      <h3 className="font-semibold">Strategic Planning</h3>
-                      <p className="text-sm text-gray-600">Coverage and synergy analysis</p>
-                    </div>
-                  </div>
-                </Card>
+            <div className="bg-surface-canvas p-space-sm rounded-lg font-label-mono text-label-mono flex items-center justify-between">
+              <span className="text-text-tertiary">Open</span>
+              <span className="text-synergy-cyan font-semibold">Analyzer →</span>
+            </div>
+          </Link>
+
+          <Link
+            href="/meta"
+            className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between hover:bg-surface-elevated transition-colors group"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-space-md">
+                <div className="w-10 h-10 rounded-lg bg-surface-elevated group-hover:bg-primary-container/20 flex items-center justify-center text-gold-tier-s transition-colors">
+                  <ListOrdered className="w-5 h-5" />
+                </div>
+                <span className="font-badge-tag text-badge-tag px-2 py-0.5 rounded bg-surface-canvas text-text-tertiary">
+                  USAGE
+                </span>
               </div>
-              <div className="flex flex-col justify-center space-y-4">
-                <h3 className="text-2xl font-bold">Built for VGC Champions</h3>
-                <p className="text-gray-600">
-                  Our platform combines cutting-edge AI analysis with deep competitive insights to help you understand 
-                  your team's strengths, identify weaknesses, and develop winning strategies. From local tournaments 
-                  to World Championships, we're here to elevate your competitive game.
+              <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Meta Rankings</div>
+              <p className="font-body-sm text-body-sm text-text-secondary mb-space-md">
+                Every tracked Pokémon ranked by usage, with tier bands and distribution.
+              </p>
+            </div>
+            <div className="bg-surface-canvas p-space-sm rounded-lg font-label-mono text-label-mono flex items-center justify-between">
+              <span className="text-text-tertiary">Open</span>
+              <span className="text-gold-tier-s font-semibold">Meta trends →</span>
+            </div>
+          </Link>
+
+          <div className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-space-md">
+                <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center text-status-water transition-colors">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <span className="font-badge-tag text-badge-tag px-2 py-0.5 rounded bg-surface-canvas text-text-tertiary">
+                  IMPORT
+                </span>
+              </div>
+              <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Pokepaste Import</div>
+              <p className="font-body-sm text-body-sm text-text-secondary mb-space-md">
+                Drop a Pokepaste link and the team is fetched, parsed and validated before analysis.
+              </p>
+            </div>
+            <div className="bg-surface-canvas p-space-sm rounded-lg font-label-mono text-label-mono flex items-center justify-between">
+              <span className="text-text-tertiary">Accepts</span>
+              <span className="text-status-water font-semibold">pokepast.es links</span>
+            </div>
+          </div>
+
+          <div className="bg-surface-card p-space-lg rounded-xl shadow-md flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-space-md">
+                <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center text-purple-tier-a transition-colors">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <span className="font-badge-tag text-badge-tag px-2 py-0.5 rounded bg-surface-canvas text-text-tertiary">
+                  SOON
+                </span>
+              </div>
+              <div className="font-headline-sm text-headline-sm text-text-primary mb-space-xs">Team Builder</div>
+              <p className="font-body-sm text-body-sm text-text-secondary mb-space-md">
+                Build a roster slot by slot with live coverage and speed feedback.
+              </p>
+            </div>
+            <div className="bg-surface-canvas p-space-sm rounded-lg font-label-mono text-label-mono flex items-center justify-between">
+              <span className="text-text-tertiary">Status</span>
+              <span className="text-purple-tier-a font-semibold">In development</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CLOSING CTA + PASTE DOCK */}
+      <section className="w-full bg-surface-canvas py-space-2xl">
+        <div className="max-w-[1600px] mx-auto px-margin md:px-margin-desktop">
+          <div className="bg-surface-card rounded-xl p-space-xl shadow-2xl relative overflow-hidden">
+            <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-primary-container/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center relative">
+              <div className="lg:col-span-6">
+                <div className="inline-flex items-center gap-1 font-badge-tag text-badge-tag text-gold-tier-s uppercase tracking-widest mb-space-xs">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Start here</span>
+                </div>
+                <h2 className="font-headline-lg text-headline-lg text-text-primary mb-space-sm leading-tight">
+                  Paste a team, get a report
+                </h2>
+                <p className="font-body-md text-body-md text-text-secondary mb-space-lg">
+                  Drop your standard Showdown export below. The team is parsed and validated here in the browser, then
+                  sent to the analyzer for a full breakdown.
                 </p>
-                <div className="flex gap-2">
-                  <Link href="/analyzer">
-                    <Button>Start Team Analysis</Button>
-                  </Link>
-                  <Link href="/meta">
-                    <Button variant="outline">View Meta Trends</Button>
-                  </Link>
+                <div className="flex flex-wrap items-center gap-space-md font-label-mono text-label-mono text-text-tertiary">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-synergy-cyan" />
+                    <span>Showdown &amp; Pokepaste input</span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold-tier-s" />
+                    <span>Bring your own OpenAI key</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="w-screen py-16 md:py-24 lg:py-32 bg-gradient-to-r from-blue-600 to-red-600">
-          <div className="w-full px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-6 text-center text-white max-w-4xl mx-auto">
-              <div className="space-y-4">
-                <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl lg:text-6xl">
-                  Ready to Elevate Your VGC Game?
-                </h2>
-                <p className="max-w-[800px] text-blue-100 text-lg md:text-xl lg:text-2xl leading-relaxed">
-                  Join thousands of competitive players who trust PokeChat for their team building and analysis needs.
-                </p>
-              </div>
-              <div className="flex flex-col gap-4 min-[400px]:flex-row pt-4">
-                <Link href="/analyzer">
-                  <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-                    <Target className="w-5 h-5 mr-2" />
-                    Analyze Your Team Now
-                  </Button>
-                </Link>
-                <Link href="/meta">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-white border-white hover:bg-white hover:text-blue-600 bg-transparent text-lg px-8 py-4"
-                  >
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Explore Meta
-                  </Button>
-                </Link>
+              <div className="lg:col-span-6 w-full">
+                <QuickAnalyzeDock />
               </div>
             </div>
           </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-gray-50">
-        <p className="text-xs text-gray-600">© 2025 PokeChat. Built for the competitive Pokemon community.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="#" className="text-xs hover:underline underline-offset-4 text-gray-600">
-            Privacy Policy
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4 text-gray-600">
-            Terms of Service
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4 text-gray-600">
-            Contact
-          </Link>
-        </nav>
-      </footer>
+        </div>
+      </section>
     </div>
   )
 }

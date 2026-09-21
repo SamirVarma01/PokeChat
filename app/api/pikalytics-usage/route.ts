@@ -4,7 +4,8 @@ export async function GET(request: NextRequest) {
   try {
     // Proxy the request to your backend
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
-    const response = await fetch(`${backendUrl}/pikalytics-usage`, {
+    const refresh = request.nextUrl.searchParams.get('refresh') === 'true'
+    const response = await fetch(`${backendUrl}/pikalytics-usage${refresh ? '?refresh=true' : ''}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

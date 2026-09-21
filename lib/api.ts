@@ -1,12 +1,15 @@
 import { fetchTeamFromPokepaste } from './pokepaste';
 
+export type FindingSource = 'computed' | 'ai';
+
 export interface AnalysisPoint {
   point: string;
   reasoning: string;
+  source?: FindingSource;
 }
 
 export interface LLMAnalysisResult {
-  grade: string;
+  grade: string | null;
   strengths: AnalysisPoint[];
   weaknesses: AnalysisPoint[];
   threats: AnalysisPoint[];
@@ -14,7 +17,9 @@ export interface LLMAnalysisResult {
     type: string;
     description: string;
     priority: string;
+    source?: FindingSource;
   }>;
+  llm_used?: boolean;
   error?: string;
 }
 
@@ -24,9 +29,9 @@ export interface AnalyzeTeamRequest {
 }
 
 /**
- * Analyzes a Pokemon team using the LLM service
+ * Analyzes a Pokemon team. Without an API key only the free rule-based half runs.
  */
-export async function analyzeTeam(teamData: string, apiKey: string): Promise<LLMAnalysisResult> {
+export async function analyzeTeam(teamData: string, apiKey?: string): Promise<LLMAnalysisResult> {
   try {
     const response = await fetch('/api/analyze-team', {
       method: 'POST',

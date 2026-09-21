@@ -1,20 +1,43 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, LinkIcon, Zap, Shield, Target, AlertTriangle, CheckCircle, TrendingUp, ArrowLeft, X, Key } from "lucide-react"
-import Link from "next/link"
-import { validatePokemonTeam, type PokemonTeam } from "@/lib/team-validation"
-import { analyzeTeam, type LLMAnalysisResult } from "@/lib/api"
+import { useState, useEffect, useMemo } from "react"
+import {
+  AlertTriangle,
+  Brain,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Key,
+  Link2,
+  RotateCcw,
+  Sparkles,
+  Terminal,
+  X,
+  Zap,
+} from "lucide-react"
+import { validatePokemonTeam, isMegaForm, megaForms, type PokemonTeam } from "@/lib/team-validation"
+import { analyzeTeam, type FindingSource, type LLMAnalysisResult } from "@/lib/api"
+import { PENDING_TEAM_KEY } from "@/components/quick-analyze-dock"
+import { RULESET_SUMMARY } from "@/lib/format"
 
-const API_KEY_STORAGE_KEY = "openai_api_key"
+const API_KEY_STORAGE_KEY = "pokechat_llm_api_key"
+
+const gradeClass = (grade: string) => {
+  switch (grade?.charAt(0)?.toUpperCase()) {
+    case "A":
+      return "text-status-grass"
+    case "B":
+      return "text-synergy-cyan"
+    case "C":
+      return "text-gold-tier-s"
+    case "D":
+      return "text-status-electric"
+    default:
+      return "text-threat-crimson"
+  }
+}
+
+type TabKey = "threats" | "strengths" | "weaknesses" | "suggestions"
 
 export default function TeamAnalyzer() {
   const [teamData, setTeamData] = useState("")
@@ -27,12 +50,19 @@ export default function TeamAnalyzer() {
   const [fetchedTeamData, setFetchedTeamData] = useState("")
   const [apiKey, setApiKey] = useState("")
   const [showApiKey, setShowApiKey] = useState(false)
+  const [inputMode, setInputMode] = useState<"paste" | "url">("paste")
+  const [activeTab, setActiveTab] = useState<TabKey>("threats")
 
   // Load API key from localStorage on mount
   useEffect(() => {
     const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY)
     if (storedKey) {
       setApiKey(storedKey)
+    }
+    const pendingTeam = sessionStorage.getItem(PENDING_TEAM_KEY)
+    if (pendingTeam) {
+      setTeamData(pendingTeam)
+      sessionStorage.removeItem(PENDING_TEAM_KEY)
     }
   }, [])
 
@@ -45,6 +75,10 @@ export default function TeamAnalyzer() {
       localStorage.removeItem(API_KEY_STORAGE_KEY)
     }
   }
+
+  const liveValidation = useMemo(() => validatePokemonTeam(teamData || fetchedTeamData), [teamData, fetchedTeamData])
+  const roster: PokemonTeam[] = liveValidation.team ?? []
+  const megaCount = megaForms(roster).length
 
   const validateTeam = (teamText: string) => {
     setIsValidating(true)
@@ -91,14 +125,9 @@ export default function TeamAnalyzer() {
 
   const handleAnalyze = async () => {
     const teamToAnalyze = teamData || fetchedTeamData
-    
+
     if (!teamToAnalyze) {
       setValidationErrors(["Please provide team data to analyze"])
-      return
-    }
-
-    if (!apiKey || !apiKey.trim()) {
-      setValidationErrors(["Please enter your OpenAI API key to analyze teams"])
       return
     }
 
@@ -118,6 +147,7 @@ export default function TeamAnalyzer() {
       } else {
         setAnalysisResult(result)
         setValidationErrors([])
+        setActiveTab("threats")
       }
     } catch (error) {
       console.error('Analysis failed:', error)
@@ -132,378 +162,509 @@ export default function TeamAnalyzer() {
     setFetchedTeamData("")
   }
 
-  const getGradeColor = (grade: string) => {
-    switch (grade) {
-      case 'A': return 'bg-green-500'
-      case 'B': return 'bg-blue-500'
-      case 'C': return 'bg-yellow-500'
-      case 'D': return 'bg-orange-500'
-      case 'F': return 'bg-red-500'
-      default: return 'bg-gray-500'
-    }
+  const resetInput = () => {
+    setTeamData("")
+    setPasteUrl("")
+    setFetchedTeamData("")
+    setValidationErrors([])
+    setAnalysisResult(null)
   }
 
+  const hasTeamText = Boolean((teamData || fetchedTeamData).trim())
+
+  const tabs: Array<{ key: TabKey; label: string; count: number; color: string; icon: typeof AlertTriangle }> = [
+    { key: "threats", label: "Threats", count: analysisResult?.threats.length ?? 0, color: "text-threat-crimson", icon: AlertTriangle },
+    { key: "strengths", label: "Strengths", count: analysisResult?.strengths.length ?? 0, color: "text-status-grass", icon: CheckCircle2 },
+    { key: "weaknesses", label: "Weaknesses", count: analysisResult?.weaknesses.length ?? 0, color: "text-status-electric", icon: Sparkles },
+    { key: "suggestions", label: "Coach Tips", count: analysisResult?.suggestions.length ?? 0, color: "text-synergy-cyan", icon: Brain },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
-      {/* Header */}
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm">
-        <Link href="/" className="flex items-center justify-center">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-red-600 rounded-full flex items-center justify-center">
-            <Zap className="h-5 w-5 text-white" />
+    <div className="relative w-full max-w-[1600px] mx-auto px-margin md:px-margin-desktop py-space-lg overflow-hidden">
+      <div className="absolute -top-10 left-1/4 w-96 h-96 bg-synergy-cyan/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-40 right-10 w-[500px] h-[500px] bg-purple-tier-a/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* PAGE HEADER */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-xl relative">
+        <div className="flex flex-col gap-space-xs">
+          <div className="flex items-center gap-space-xs font-label-mono text-label-mono text-text-tertiary uppercase tracking-wider">
+            <span>Workspace</span>
+            <span>/</span>
+            <span className="text-synergy-cyan">VGC Team Analyzer</span>
           </div>
-          <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent">
-            PokeChat
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="/meta" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Meta Analysis
-          </Link>
-          <Link href="/builder" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Team Builder
-          </Link>
-        </nav>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Team Analyzer</h1>
-            <p className="text-gray-600">Import your team and get AI-powered strategic analysis</p>
+          <div className="flex flex-wrap items-center gap-space-md mt-1">
+            <h1 className="font-headline-lg text-headline-lg text-text-primary tracking-tight">
+              Competitive Team Analyzer
+            </h1>
+            <span className="px-space-sm py-1 rounded bg-surface-elevated text-synergy-cyan font-badge-tag text-badge-tag tracking-wider shadow-sm flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-synergy-cyan animate-pulse" />
+              {RULESET_SUMMARY}
+            </span>
           </div>
+        </div>
+      </div>
 
-          {/* Validation Errors */}
-          {validationErrors.length > 0 && (
-            <Alert className="mb-6 border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <AlertDescription className="text-red-700">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <strong>Team Format Issues:</strong>
-                    <ul className="mt-2 space-y-1">
-                      {validationErrors.map((error, index) => (
-                        <li key={index} className="text-sm">• {error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearErrors}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* GLOBAL ERROR BANNER */}
+      {validationErrors.length > 0 && (
+        <div className="mb-space-lg bg-surface-card rounded-xl p-space-md shadow-lg flex items-start justify-between gap-space-md relative">
+          <div className="flex items-start gap-space-sm">
+            <AlertTriangle className="w-5 h-5 text-threat-crimson flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-label-md text-label-md text-threat-crimson uppercase tracking-wider">
+                Team format issues
+              </div>
+              <ul className="mt-2 space-y-1 font-label-mono text-label-mono text-text-secondary">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={clearErrors}
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+            aria-label="Dismiss errors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Input Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Import Your Team
-                </CardTitle>
-                <CardDescription>Paste your team from Pokemon Showdown or provide a Pokepaste link</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* API Key Input */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <Key className="h-4 w-4" />
-                    OpenAI API Key
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type={showApiKey ? "text" : "password"}
-                      placeholder="sk-..."
-                      value={apiKey}
-                      onChange={(e) => handleApiKeyChange(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? <X className="h-4 w-4" /> : <Key className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Your API key is stored locally in your browser and only used to make API calls to OpenAI. It is never stored on our servers. Get your key from{" "}
-                    <a
-                      href="https://platform.openai.com/api-keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      OpenAI Platform
-                    </a>
-                  </p>
-                </div>
-                <Tabs defaultValue="paste" className="w-full" onValueChange={() => clearErrors()}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="paste">Team Data</TabsTrigger>
-                    <TabsTrigger value="url">Pokepaste URL</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="paste" className="space-y-4">
-                    <Textarea
-                      placeholder="Paste your team export from Pokemon Showdown here..."
-                      value={teamData}
+      {/* WORKSPACE GRID */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-gutter-desktop items-start relative">
+        {/* LEFT: IMPORT & CONFIG */}
+        <div className="xl:col-span-5 flex flex-col gap-space-lg">
+          <div className="bg-surface-card rounded-xl shadow-xl overflow-hidden">
+            {/* terminal tabs */}
+            <div className="bg-surface-elevated px-space-md py-space-sm flex items-center justify-between">
+              <div className="flex items-center gap-space-xs">
+                <button
+                  type="button"
+                  onClick={() => { setInputMode("paste"); clearErrors() }}
+                  className={`px-space-md py-1.5 rounded font-label-mono text-label-mono flex items-center gap-2 transition-colors ${
+                    inputMode === "paste"
+                      ? "bg-surface-card text-synergy-cyan shadow-sm"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${inputMode === "paste" ? "bg-synergy-cyan" : "bg-text-tertiary"}`} />
+                  Raw Showdown Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setInputMode("url"); clearErrors() }}
+                  className={`px-space-md py-1.5 rounded font-label-mono text-label-mono transition-colors ${
+                    inputMode === "url"
+                      ? "bg-surface-card text-synergy-cyan shadow-sm"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  Pokepaste URL
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={resetInput}
+                title="Clear input"
+                className="text-text-tertiary hover:text-text-primary transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-space-md flex flex-col gap-space-sm">
+              {inputMode === "paste" ? (
+                <>
+                  <span className="font-label-mono text-label-mono text-text-tertiary uppercase tracking-wider">
+                    Paste Pokémon Showdown export:
+                  </span>
+                  <textarea
+                    rows={13}
+                    spellCheck={false}
+                    value={teamData}
+                    onChange={(e) => {
+                      setTeamData(e.target.value)
+                      if (validationErrors.length > 0) clearErrors()
+                    }}
+                    placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nTera Type: Ghost\nEVs: 252 HP / 68 Atk / 156 Def / 28 SpD / 4 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Parting Shot\n- Flare Blitz"}
+                    className="w-full bg-surface-canvas rounded p-space-md font-label-mono text-label-mono text-text-primary leading-relaxed placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors shadow-inner resize-y"
+                  />
+                </>
+              ) : (
+                <>
+                  <span className="font-label-mono text-label-mono text-text-tertiary uppercase tracking-wider">
+                    Fetch team from a Pokepaste link:
+                  </span>
+                  <div className="flex gap-space-sm">
+                    <input
+                      type="text"
+                      value={pasteUrl}
                       onChange={(e) => {
-                        setTeamData(e.target.value)
-                        if (validationErrors.length > 0) {
-                          clearErrors()
-                        }
+                        setPasteUrl(e.target.value)
+                        if (validationErrors.length > 0) clearErrors()
                       }}
-                      className="min-h-[200px]"
+                      placeholder="https://pokepast.es/..."
+                      className="flex-1 bg-surface-canvas rounded px-space-md py-2 font-label-mono text-label-mono text-text-primary placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors"
                     />
-                  </TabsContent>
-                  <TabsContent value="url" className="space-y-4">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="https://pokepaste.es/..."
-                        value={pasteUrl}
-                        onChange={(e) => {
-                          setPasteUrl(e.target.value)
-                          if (validationErrors.length > 0) {
-                            clearErrors()
-                          }
-                        }}
-                        className="flex-1"
-                      />
-                      <Button
-                        onClick={handleFetchFromUrl}
-                        disabled={isFetchingUrl || !pasteUrl.trim()}
-                        variant="outline"
-                      >
-                        {isFetchingUrl ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                            Fetching...
-                          </>
-                        ) : (
-                          <>
-                            <LinkIcon className="h-4 w-4 mr-2" />
-                            Fetch Team
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {fetchedTeamData && (
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-green-700">✓ Team fetched successfully!</div>
-                        <Textarea
-                          value={fetchedTeamData}
-                          onChange={(e) => setTeamData(e.target.value)}
-                          className="min-h-[150px] text-sm"
-                          placeholder="Fetched team data will appear here..."
-                        />
-                      </div>
-                    )}
-                    
-                    <Alert>
-                      <LinkIcon className="h-4 w-4" />
-                      <AlertDescription>
-                        We'll automatically fetch your team data from the Pokepaste link
-                      </AlertDescription>
-                    </Alert>
-                  </TabsContent>
-                </Tabs>
-                <Button
+                    <button
+                      type="button"
+                      onClick={handleFetchFromUrl}
+                      disabled={isFetchingUrl || !pasteUrl.trim()}
+                      className="px-space-md py-2 rounded bg-surface-elevated hover:bg-surface-bright text-text-primary font-label-md text-label-md flex items-center gap-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isFetchingUrl ? (
+                        <span className="w-4 h-4 rounded-full border-2 border-synergy-cyan border-b-transparent animate-spin" />
+                      ) : (
+                        <Link2 className="w-4 h-4 text-synergy-cyan" />
+                      )}
+                      {isFetchingUrl ? "Fetching" : "Fetch"}
+                    </button>
+                  </div>
+                  <textarea
+                    rows={11}
+                    spellCheck={false}
+                    value={teamData}
+                    onChange={(e) => setTeamData(e.target.value)}
+                    placeholder="Fetched team data will appear here..."
+                    className="w-full bg-surface-canvas rounded p-space-md font-label-mono text-label-mono text-text-primary leading-relaxed placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors shadow-inner resize-y"
+                  />
+                </>
+              )}
+
+              {/* live validation status */}
+              <div className="p-space-sm rounded bg-surface-canvas flex items-center justify-between">
+                <div className="flex items-center gap-space-sm">
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                        hasTeamText && liveValidation.isValid ? "bg-status-grass" : "bg-text-tertiary"
+                      }`}
+                    />
+                    <span
+                      className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                        hasTeamText && liveValidation.isValid ? "bg-status-grass" : "bg-text-tertiary"
+                      }`}
+                    />
+                  </span>
+                  <span
+                    className={`font-label-mono text-label-mono font-semibold ${
+                      hasTeamText && liveValidation.isValid ? "text-status-grass" : "text-text-tertiary"
+                    }`}
+                  >
+                    {!hasTeamText
+                      ? "Waiting for a team export"
+                      : liveValidation.isValid
+                        ? `${roster.length} Pokémon detected · format looks valid`
+                        : liveValidation.errors[0]}
+                  </span>
+                </div>
+                <span className="font-label-mono text-label-mono text-text-tertiary">
+                  {hasTeamText ? `${(teamData || fetchedTeamData).trim().split("\n").length} lines` : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* config + CTA */}
+            <div className="p-space-md bg-surface-elevated/40 flex flex-col gap-space-md">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-label-mono text-label-mono uppercase text-text-secondary flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-synergy-cyan" />
+                    Groq API key (optional)
+                  </label>
+                  <span
+                    className={`font-badge-tag text-badge-tag px-1.5 py-0.5 rounded ${
+                      apiKey.trim()
+                        ? "bg-status-grass/15 text-status-grass"
+                        : "bg-surface-canvas text-text-tertiary"
+                    }`}
+                  >
+                    {apiKey.trim() ? "Key saved locally" : "Rules-only mode"}
+                  </span>
+                </div>
+                <div className="relative">
+                  <Key className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+                  <input
+                    type={showApiKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full bg-surface-canvas rounded pl-9 pr-11 py-2 font-label-mono text-label-mono text-text-primary placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors"
+                  >
+                    {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <p className="font-label-mono text-label-mono text-text-tertiary">
+                  Coverage, speed and legality are computed for free without a key. Add a free{" "}
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-synergy-cyan hover:underline"
+                  >
+                    Groq key
+                  </a>{" "}
+                  for written coaching on top. Stored in your browser only.
+                </p>
+              </div>
+
+              <div className="pt-space-xs flex flex-col gap-space-xs">
+                <button
+                  type="button"
                   onClick={handleAnalyze}
-                  disabled={isAnalyzing || isValidating || (!teamData && !fetchedTeamData) || !apiKey.trim()}
-                  className="w-full mt-4"
+                  disabled={isAnalyzing || isValidating || !hasTeamText}
+                  className="w-full py-space-md px-space-lg rounded bg-primary-container text-on-primary-container font-headline-sm text-headline-sm uppercase tracking-wider flex items-center justify-center gap-space-sm hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(0,229,255,0.35)] disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
                 >
                   {isAnalyzing ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Analyzing Team...
-                    </>
-                  ) : isValidating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Validating Team...
+                      <span className="w-5 h-5 rounded-full border-2 border-on-primary-container border-b-transparent animate-spin" />
+                      <span>Analyzing team...</span>
                     </>
                   ) : (
                     <>
-                      <Target className="h-4 w-4 mr-2" />
-                      Analyze Team
+                      <Terminal className="w-5 h-5" />
+                      <span>Analyze team structure</span>
+                      <Zap className="w-5 h-5" />
                     </>
                   )}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            {/* Results Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Analysis Results
-                </CardTitle>
-                <CardDescription>
-                  {analysisResult ? "Your team analysis is complete" : "Results will appear here after analysis"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {analysisResult ? (
-                  <div className="space-y-6">
-                    {/* Team Grade */}
-                    <div className="text-center">
-                      <div className="text-2xl font-bold mb-2">Team Grade</div>
-                      <Badge 
-                        className={`text-white text-lg px-4 py-2 ${getGradeColor(analysisResult.grade)}`}
-                      >
-                        {analysisResult.grade}
-                      </Badge>
-                    </div>
+        {/* RIGHT: RESULTS */}
+        <div className="xl:col-span-7 flex flex-col gap-space-lg">
+          {/* summary banner */}
+          <div className="bg-surface-card rounded-xl p-space-lg shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center gap-space-lg">
+            <div className="absolute right-0 top-0 w-80 h-full bg-gradient-to-l from-synergy-cyan/10 to-transparent pointer-events-none" />
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div className="p-3 bg-red-50 rounded-lg">
-                        <div className="text-2xl font-bold text-red-600">{analysisResult.threats.length}</div>
-                        <div className="text-xs text-red-600">Major Threats</div>
-                      </div>
-                      <div className="p-3 bg-green-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">{analysisResult.strengths.length}</div>
-                        <div className="text-xs text-green-600">Key Strengths</div>
-                      </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">{analysisResult.suggestions.length}</div>
-                        <div className="text-xs text-blue-600">Suggestions</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Import your team to see detailed analysis</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-space-md flex-shrink-0 relative">
+              <div className="w-24 h-24 rounded-2xl bg-surface-elevated flex flex-col items-center justify-center shadow-[0_0_24px_rgba(0,242,254,0.2)]">
+                <span className={`font-headline-xl text-headline-xl leading-none ${analysisResult?.grade ? gradeClass(analysisResult.grade) : "text-text-tertiary"}`}>
+                  {analysisResult?.grade ?? "—"}
+                </span>
+                <span className="font-badge-tag text-badge-tag text-gold-tier-s tracking-widest mt-1">TEAM GRADE</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-headline-sm text-headline-sm text-synergy-cyan">Analysis Report</span>
+                <span className="font-body-sm text-body-sm text-text-secondary mt-0.5 max-w-xs">
+                  {!analysisResult
+                    ? "Import a team and run the analyzer to populate this report."
+                    : analysisResult.llm_used
+                      ? "Computed coverage plus written coaching."
+                      : "Computed from live usage data. Add a free Groq key for written coaching and a grade."}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-space-sm flex-1 w-full relative">
+              <div className="p-space-md rounded-lg bg-surface-elevated flex flex-col justify-between shadow-sm">
+                <div className="flex items-center justify-between text-threat-crimson">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span className="font-stat-display text-stat-display leading-none">
+                    {analysisResult?.threats.length ?? 0}
+                  </span>
+                </div>
+                <span className="font-label-mono text-label-mono font-semibold text-threat-crimson block mt-2">
+                  Threats
+                </span>
+              </div>
+              <div className="p-space-md rounded-lg bg-surface-elevated flex flex-col justify-between shadow-sm">
+                <div className="flex items-center justify-between text-status-grass">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-stat-display text-stat-display leading-none">
+                    {analysisResult?.strengths.length ?? 0}
+                  </span>
+                </div>
+                <span className="font-label-mono text-label-mono font-semibold text-status-grass block mt-2">
+                  Strengths
+                </span>
+              </div>
+              <div className="p-space-md rounded-lg bg-surface-elevated flex flex-col justify-between shadow-sm">
+                <div className="flex items-center justify-between text-synergy-cyan">
+                  <Brain className="w-5 h-5" />
+                  <span className="font-stat-display text-stat-display leading-none">
+                    {analysisResult?.suggestions.length ?? 0}
+                  </span>
+                </div>
+                <span className="font-label-mono text-label-mono font-semibold text-synergy-cyan block mt-2">
+                  Coach Tips
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Detailed Analysis */}
-          {analysisResult && (
-            <div className="mt-8 space-y-6">
-              <Tabs defaultValue="threats" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="threats">Threats</TabsTrigger>
-                  <TabsTrigger value="strengths">Strengths</TabsTrigger>
-                  <TabsTrigger value="weaknesses">Weaknesses</TabsTrigger>
-                  <TabsTrigger value="suggestions">Tips</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="threats" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-red-500" />
-                        Major Threats to Your Team
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {analysisResult.threats.map((threat, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                          <Badge variant="destructive">
-                            High
-                          </Badge>
-                          <div>
-                            <div className="font-medium">{threat.point}</div>
-                            <div className="text-sm text-gray-600 mt-1">{threat.reasoning}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="strengths" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        Team Strengths
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {analysisResult.strengths.map((strength, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg"
-                        >
-                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                          <div>
-                            <div className="text-sm font-medium">{strength.point}</div>
-                            <div className="text-sm text-gray-600 mt-1">{strength.reasoning}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="weaknesses" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-orange-500" />
-                        Areas for Improvement
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {analysisResult.weaknesses.map((weakness, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg"
-                        >
-                          <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
-                          <div>
-                            <div className="text-sm font-medium">{weakness.point}</div>
-                            <div className="text-sm text-gray-600 mt-1">{weakness.reasoning}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="suggestions" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-blue-500" />
-                        Strategic Recommendations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {analysisResult.suggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"
-                        >
-                          <TrendingUp className="h-5 w-5 text-blue-500 mt-0.5" />
-                          <div>
-                            <div className="text-sm font-medium">{suggestion.description}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+          {/* roster ribbon */}
+          {roster.length > 0 && (
+            <div className="flex flex-col gap-space-xs">
+              <div className="flex flex-wrap items-center justify-between gap-space-sm px-1">
+                <span className="font-label-mono text-label-mono text-text-tertiary uppercase tracking-wider">
+                  Parsed roster ({roster.length} slots)
+                </span>
+                {megaCount > 1 && (
+                  <span className="font-label-mono text-label-mono text-status-electric flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {megaCount} Mega forms — only one can Mega Evolve per battle
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-space-sm">
+                {roster.map((pokemon, index) => (
+                  <div
+                    key={`${pokemon.name}-${index}`}
+                    className="bg-surface-card rounded-lg p-space-sm shadow-md hover:bg-surface-elevated transition-all flex flex-col gap-space-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-badge-tag text-badge-tag text-text-tertiary">
+                        #{String(index + 1).padStart(2, "0")}
+                      </span>
+                      {isMegaForm(pokemon.name) && (
+                        <span className="px-1.5 py-0.5 rounded font-badge-tag text-badge-tag bg-purple-tier-a/20 text-purple-tier-a">
+                          MEGA
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-headline-sm text-headline-sm text-text-primary truncate">
+                        {pokemon.name}
+                      </span>
+                      <span className="font-label-mono text-label-mono text-text-secondary truncate">
+                        {pokemon.item ?? "No item"}
+                      </span>
+                    </div>
+                    <div className="text-center font-badge-tag text-badge-tag text-text-tertiary uppercase py-1 bg-surface-canvas rounded truncate">
+                      {pokemon.ability ?? "—"}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* tabbed breakdown */}
+          <div className="bg-surface-card rounded-xl shadow-xl overflow-hidden flex flex-col">
+            <div className="bg-surface-elevated px-space-md py-space-xs flex flex-wrap items-center gap-space-xs">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.key
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-space-md py-2 rounded font-label-md text-label-md flex items-center gap-2 transition-colors ${
+                      isActive ? `bg-surface-card ${tab.color} shadow-sm` : "text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label} ({tab.count})
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="p-space-lg flex flex-col gap-space-md">
+              {!analysisResult ? (
+                <div className="text-center py-space-2xl flex flex-col items-center gap-space-sm">
+                  <Brain className="w-10 h-10 text-text-tertiary opacity-50" />
+                  <p className="font-body-md text-body-md text-text-tertiary">
+                    No report yet. Import a team on the left and run the analyzer.
+                  </p>
+                </div>
+              ) : activeTab === "suggestions" ? (
+                analysisResult.suggestions.map((suggestion, index) => (
+                  <AnalysisCard
+                    key={index}
+                    accent="text-synergy-cyan"
+                    accentBg="bg-synergy-cyan/20"
+                    tag={suggestion.priority ? `${suggestion.priority.toUpperCase()} PRIORITY` : "SUGGESTION"}
+                    title={suggestion.type || "Coach tip"}
+                    body={suggestion.description}
+                    source={suggestion.source}
+                  />
+                ))
+              ) : (
+                (activeTab === "threats"
+                  ? analysisResult.threats
+                  : activeTab === "strengths"
+                    ? analysisResult.strengths
+                    : analysisResult.weaknesses
+                ).map((item, index) => (
+                  <AnalysisCard
+                    key={index}
+                    accent={
+                      activeTab === "threats"
+                        ? "text-threat-crimson"
+                        : activeTab === "strengths"
+                          ? "text-status-grass"
+                          : "text-status-electric"
+                    }
+                    accentBg={
+                      activeTab === "threats"
+                        ? "bg-threat-crimson/20"
+                        : activeTab === "strengths"
+                          ? "bg-status-grass/20"
+                          : "bg-status-electric/20"
+                    }
+                    tag={
+                      activeTab === "threats" ? "THREAT" : activeTab === "strengths" ? "STRENGTH" : "WEAKNESS"
+                    }
+                    title={item.point}
+                    body={item.reasoning}
+                    source={item.source}
+                  />
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function AnalysisCard({
+  accent,
+  accentBg,
+  tag,
+  title,
+  body,
+  source,
+}: {
+  accent: string
+  accentBg: string
+  tag: string
+  title: string
+  body: string
+  source?: FindingSource
+}) {
+  return (
+    <div className="p-space-md rounded-lg bg-surface-elevated/70 hover:bg-surface-elevated transition-colors shadow-sm flex flex-col gap-space-sm">
+      <div className="flex flex-wrap items-center gap-space-sm">
+        <span className={`px-2 py-0.5 rounded font-badge-tag text-badge-tag tracking-wider ${accentBg} ${accent}`}>
+          {tag}
+        </span>
+        <span className="font-headline-sm text-headline-sm text-text-primary">{title}</span>
+        {source && (
+          <span
+            className={`px-1.5 py-0.5 rounded font-badge-tag text-badge-tag tracking-wider ml-auto ${
+              source === "computed" ? "bg-surface-canvas text-synergy-cyan" : "bg-surface-canvas text-text-tertiary"
+            }`}
+            title={source === "computed" ? "Computed from live usage data" : "Written by the AI coach"}
+          >
+            {source === "computed" ? "COMPUTED" : "AI"}
+          </span>
+        )}
+      </div>
+      {body && <p className="font-body-md text-body-md text-text-secondary leading-relaxed">{body}</p>}
     </div>
   )
 }

@@ -34,6 +34,8 @@ export interface LLMAnalysisResult {
   error?: string;
 }
 
+const NATURE_LINE = /^[A-Za-z]+ Nature$/;
+
 /**
  * Validates if the input text follows Pokemon Showdown team format
  */
@@ -56,11 +58,12 @@ export function validatePokemonTeam(teamText: string): ValidationResult {
     const line = lines[i].trim();
     if (!line) continue;
 
-    // Check if this is a new Pokemon line (starts with Pokemon name, not spaces or dashes)
-    if (!line.startsWith(' ') && !line.startsWith('-') && !line.startsWith('EVs:') && 
-        !line.startsWith('IVs:') && !line.startsWith('Ability:') && !line.startsWith('Nature') && 
-        !line.startsWith('Level:') && !line.startsWith('Tera Type:')) {
-      
+    // Attribute lines are either "Key: value" or a trailing "<Nature> Nature";
+    // anything else at the start of a block names a Pokemon.
+    const isAttributeLine = /^[A-Za-z][A-Za-z .]*:/.test(line) || NATURE_LINE.test(line);
+
+    if (!line.startsWith(' ') && !line.startsWith('-') && !isAttributeLine) {
+
       // Save previous Pokemon if exists
       if (currentPokemon && currentPokemon.name && currentPokemon.moves && currentPokemon.moves.length > 0) {
         team.push(currentPokemon as PokemonTeam);
@@ -116,13 +119,13 @@ export function validatePokemonTeam(teamText: string): ValidationResult {
       }
       currentPokemon.teraType = line.replace('Tera Type:', '').trim();
     }
-    // Nature
-    else if (line.startsWith('Nature')) {
+    // Nature ("Adamant Nature")
+    else if (NATURE_LINE.test(line)) {
       if (!currentPokemon) {
         errors.push(`Line ${i + 1}: Nature specified without Pokemon`);
         continue;
       }
-      currentPokemon.nature = line.replace('Nature', '').trim();
+      currentPokemon.nature = line.replace(/\s*Nature$/, '').trim();
     }
     // EVs
     else if (line.startsWith('EVs:')) {
@@ -206,11 +209,45 @@ export function validatePokemonTeam(teamText: string): ValidationResult {
     }
   }
 
+  // Species clause
+  const seenSpecies = new Set<string>();
+  for (const pokemon of team) {
+    const species = pokemon.name.toLowerCase();
+    if (seenSpecies.has(species)) {
+      errors.push(`Duplicate Pokemon: ${pokemon.name} appears more than once`);
+    }
+    seenSpecies.add(species);
+  }
+
+  // Item clause: no two Pokemon may hold the same item
+  const seenItems = new Map<string, string>();
+  for (const pokemon of team) {
+    if (!pokemon.item) continue;
+    const item = pokemon.item.toLowerCase();
+    const holder = seenItems.get(item);
+    if (holder) {
+      errors.push(`Item clause: ${pokemon.item} is held by both ${holder} and ${pokemon.name}`);
+    } else {
+      seenItems.set(item, pokemon.name);
+    }
+  }
+
+  // The parsed roster is returned even when rules fail, so the UI can show what
+  // was read back alongside the error.
   return {
     isValid: errors.length === 0,
     errors,
-    team: errors.length === 0 ? team : undefined
+    team
   };
+}
+
+/** A Mega form, as Champions team lists spell it: "Salamence-Mega", "Raichu-Mega-Y". */
+export function isMegaForm(name: string): boolean {
+  return /-mega(-[a-z])?$/i.test(name.trim());
+}
+
+export function megaForms(team: PokemonTeam[]): PokemonTeam[] {
+  return team.filter((pokemon) => isMegaForm(pokemon.name));
 }
 
 /**

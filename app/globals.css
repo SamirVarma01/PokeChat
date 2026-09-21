@@ -2,30 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-  font-size: 1.25rem;
   margin: 0;
   padding: 0;
 }
 
-main, .container, .max-w-4xl, .max-w-5xl, .max-w-6xl {
-  margin-left: auto;
-  margin-right: auto;
-  align-items: center;
-  justify-content: flex-start;
-  /* Removed display: block to allow Tailwind grid classes to work */
+body {
+  min-height: 100vh;
+  overscroll-behavior: none;
 }
 
-/* Removed global h1, h2, h3 styles to allow Tailwind classes to work */
-
-/* Removed global card styles to allow Tailwind classes to work */
-
-button, .btn, .Button {
-  font-size: 1.25rem;
-  padding: 1rem 2rem;
-  border-radius: 0.75rem;
+::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {
@@ -111,6 +100,6 @@ button, .btn, .Button {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface-deep text-on-surface antialiased;
   }
 }

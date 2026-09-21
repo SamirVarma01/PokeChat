@@ -12,15 +12,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'OpenAI API key is required' },
-        { status: 400 }
-      );
-    }
-
-    // Forward the request to the backend
-    const backendResponse = await fetch('http://localhost:8000/analyze-team', {
+    // No API key is fine: the backend still returns the rule-based analysis.
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+    const backendResponse = await fetch(`${backendUrl}/analyze-team`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
