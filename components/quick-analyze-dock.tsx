@@ -6,38 +6,45 @@ import { Braces, Zap } from "lucide-react"
 
 export const PENDING_TEAM_KEY = "pokechat_pending_team"
 
-const SAMPLE_TEAM = `Incineroar @ Sitrus Berry
+const SAMPLE_TEAM = `Rillaboom @ Miracle Seed
+Ability: Grassy Surge
+Level: 50
+EVs: 252 HP / 196 Atk / 60 SpD
+Adamant Nature
+- Fake Out
+- Grassy Glide
+- Wood Hammer
+- High Horsepower
+
+Sneasler @ Focus Sash
+Ability: Poison Touch
+Level: 50
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Fake Out
+- Dire Claw
+- Close Combat
+- Protect
+
+Salamence-Mega @ Salamencite
+Ability: Aerilate
+Level: 50
+EVs: 252 Atk / 4 SpD / 252 Spe
+Jolly Nature
+- Double-Edge
+- Dragon Dance
+- Tailwind
+- Protect
+
+Incineroar @ Sitrus Berry
 Ability: Intimidate
 Level: 50
-Tera Type: Ghost
-EVs: 252 HP / 68 Atk / 156 Def / 28 SpD / 4 Spe
+EVs: 252 HP / 4 Atk / 252 SpD
 Careful Nature
 - Fake Out
 - Knock Off
 - Parting Shot
-- Flare Blitz
-
-Rillaboom @ Assault Vest
-Ability: Grassy Surge
-Level: 50
-Tera Type: Fire
-EVs: 252 HP / 196 Atk / 12 Def / 44 SpD / 4 Spe
-Adamant Nature
-- Grassy Glide
-- Wood Hammer
-- High Horsepower
-- U-turn
-
-Flutter Mane @ Choice Specs
-Ability: Protosynthesis
-Level: 50
-Tera Type: Fairy
-EVs: 116 HP / 204 Def / 68 SpA / 4 SpD / 116 Spe
-Timid Nature
-- Moonblast
-- Dazzling Gleam
-- Shadow Ball
-- Power Gem`
+- Flare Blitz`
 
 export function QuickAnalyzeDock() {
   const [teamText, setTeamText] = useState("")
@@ -71,7 +78,7 @@ export function QuickAnalyzeDock() {
         value={teamText}
         onChange={(e) => setTeamText(e.target.value)}
         spellCheck={false}
-        placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nTera Type: Ghost\nEVs: 252 HP / 68 Atk / 156 Def / 28 SpD / 4 Spe\nCareful Nature\n- Fake Out\n- Knock Off..."}
+        placeholder={"Rillaboom @ Miracle Seed\nAbility: Grassy Surge\nEVs: 252 HP / 196 Atk / 60 SpD\nAdamant Nature\n- Fake Out\n- Grassy Glide\n- Wood Hammer..."}
         className="w-full bg-surface-canvas text-text-primary font-label-mono text-label-mono p-space-sm rounded-lg placeholder:text-text-tertiary focus:outline-none focus:bg-surface transition-colors resize-none"
       />
 

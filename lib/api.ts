@@ -25,20 +25,19 @@ export interface LLMAnalysisResult {
 
 export interface AnalyzeTeamRequest {
   team: string;
-  apiKey?: string;
 }
 
 /**
- * Analyzes a Pokemon team. Without an API key only the free rule-based half runs.
+ * Analyzes a Pokemon team. The LLM key lives server-side.
  */
-export async function analyzeTeam(teamData: string, apiKey?: string): Promise<LLMAnalysisResult> {
+export async function analyzeTeam(teamData: string): Promise<LLMAnalysisResult> {
   try {
     const response = await fetch('/api/analyze-team', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ team: teamData, apiKey }),
+      body: JSON.stringify({ team: teamData }),
     });
 
     if (!response.ok) {

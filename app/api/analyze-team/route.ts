@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { team, apiKey } = body;
+    const { team } = body;
 
     if (!team) {
       return NextResponse.json(
@@ -12,14 +12,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // No API key is fine: the backend still returns the rule-based analysis.
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
     const backendResponse = await fetch(`${backendUrl}/analyze-team`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ team, apiKey }),
+      body: JSON.stringify({ team }),
     });
 
     if (!backendResponse.ok) {

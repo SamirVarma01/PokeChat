@@ -5,9 +5,6 @@ import {
   AlertTriangle,
   Brain,
   CheckCircle2,
-  Eye,
-  EyeOff,
-  Key,
   Link2,
   RotateCcw,
   Sparkles,
@@ -19,8 +16,6 @@ import { validatePokemonTeam, isMegaForm, megaForms, type PokemonTeam } from "@/
 import { analyzeTeam, type FindingSource, type LLMAnalysisResult } from "@/lib/api"
 import { PENDING_TEAM_KEY } from "@/components/quick-analyze-dock"
 import { RULESET_SUMMARY } from "@/lib/format"
-
-const API_KEY_STORAGE_KEY = "pokechat_llm_api_key"
 
 const gradeClass = (grade: string) => {
   switch (grade?.charAt(0)?.toUpperCase()) {
@@ -48,33 +43,16 @@ export default function TeamAnalyzer() {
   const [isValidating, setIsValidating] = useState(false)
   const [isFetchingUrl, setIsFetchingUrl] = useState(false)
   const [fetchedTeamData, setFetchedTeamData] = useState("")
-  const [apiKey, setApiKey] = useState("")
-  const [showApiKey, setShowApiKey] = useState(false)
   const [inputMode, setInputMode] = useState<"paste" | "url">("paste")
   const [activeTab, setActiveTab] = useState<TabKey>("threats")
 
-  // Load API key from localStorage on mount
   useEffect(() => {
-    const storedKey = localStorage.getItem(API_KEY_STORAGE_KEY)
-    if (storedKey) {
-      setApiKey(storedKey)
-    }
     const pendingTeam = sessionStorage.getItem(PENDING_TEAM_KEY)
     if (pendingTeam) {
       setTeamData(pendingTeam)
       sessionStorage.removeItem(PENDING_TEAM_KEY)
     }
   }, [])
-
-  // Save API key to localStorage when it changes
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value)
-    if (value) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, value)
-    } else {
-      localStorage.removeItem(API_KEY_STORAGE_KEY)
-    }
-  }
 
   const liveValidation = useMemo(() => validatePokemonTeam(teamData || fetchedTeamData), [teamData, fetchedTeamData])
   const roster: PokemonTeam[] = liveValidation.team ?? []
@@ -140,7 +118,7 @@ export default function TeamAnalyzer() {
     setAnalysisResult(null)
 
     try {
-      const result = await analyzeTeam(teamToAnalyze, apiKey)
+      const result = await analyzeTeam(teamToAnalyze)
       if (result.error) {
         setValidationErrors([result.error])
         setAnalysisResult(null)
@@ -287,7 +265,7 @@ export default function TeamAnalyzer() {
                       setTeamData(e.target.value)
                       if (validationErrors.length > 0) clearErrors()
                     }}
-                    placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nTera Type: Ghost\nEVs: 252 HP / 68 Atk / 156 Def / 28 SpD / 4 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Parting Shot\n- Flare Blitz"}
+                    placeholder={"Rillaboom @ Miracle Seed\nAbility: Grassy Surge\nLevel: 50\nEVs: 252 HP / 196 Atk / 60 SpD\nAdamant Nature\n- Fake Out\n- Grassy Glide\n- Wood Hammer\n- High Horsepower"}
                     className="w-full bg-surface-canvas rounded p-space-md font-label-mono text-label-mono text-text-primary leading-relaxed placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors shadow-inner resize-y"
                   />
                 </>
@@ -365,57 +343,9 @@ export default function TeamAnalyzer() {
               </div>
             </div>
 
-            {/* config + CTA */}
+            {/* CTA */}
             <div className="p-space-md bg-surface-elevated/40 flex flex-col gap-space-md">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-label-mono text-label-mono uppercase text-text-secondary flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-synergy-cyan" />
-                    Groq API key (optional)
-                  </label>
-                  <span
-                    className={`font-badge-tag text-badge-tag px-1.5 py-0.5 rounded ${
-                      apiKey.trim()
-                        ? "bg-status-grass/15 text-status-grass"
-                        : "bg-surface-canvas text-text-tertiary"
-                    }`}
-                  >
-                    {apiKey.trim() ? "Key saved locally" : "Rules-only mode"}
-                  </span>
-                </div>
-                <div className="relative">
-                  <Key className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
-                  <input
-                    type={showApiKey ? "text" : "password"}
-                    value={apiKey}
-                    onChange={(e) => handleApiKeyChange(e.target.value)}
-                    placeholder="sk-..."
-                    className="w-full bg-surface-canvas rounded pl-9 pr-11 py-2 font-label-mono text-label-mono text-text-primary placeholder:text-text-tertiary focus:outline-none focus:bg-surface-elevated transition-colors"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors"
-                  >
-                    {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <p className="font-label-mono text-label-mono text-text-tertiary">
-                  Coverage, speed and legality are computed for free without a key. Add a free{" "}
-                  <a
-                    href="https://console.groq.com/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-synergy-cyan hover:underline"
-                  >
-                    Groq key
-                  </a>{" "}
-                  for written coaching on top. Stored in your browser only.
-                </p>
-              </div>
-
-              <div className="pt-space-xs flex flex-col gap-space-xs">
+              <div className="flex flex-col gap-space-xs">
                 <button
                   type="button"
                   onClick={handleAnalyze}

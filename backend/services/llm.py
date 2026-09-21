@@ -17,6 +17,7 @@ NATURE_LINE = re.compile(r"^[A-Za-z]+ Nature$")
 # local Ollama at http://localhost:11434/v1.
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
+LLM_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY") or ""
 
 
 def computed_findings(report: Dict) -> Dict[str, List[Dict]]:
@@ -250,8 +251,12 @@ def merge_findings(analysis: Dict, computed: Dict[str, List[Dict]], rule_report:
     return merged
 
 
-def analyze_team_with_llm(team_data: str, api_key: Optional[str] = None) -> dict:
-    """Analyze a team. The rule-based half runs with or without an API key."""
+def analyze_team_with_llm(team_data: str) -> dict:
+    """Analyze a team.
+
+    The rule-based half always runs. The written coaching runs only when the
+    server has an LLM key configured (GROQ_API_KEY in backend/.env).
+    """
     try:
         pokemon_list = parse_showdown_team(team_data)
 
@@ -289,7 +294,7 @@ def analyze_team_with_llm(team_data: str, api_key: Optional[str] = None) -> dict
         rule_report = analyze_team_rules(pokemon_list, snapshot)
         computed = computed_findings(rule_report)
 
-        if not api_key or not api_key.strip():
+        if not LLM_API_KEY.strip():
             return {
                 "grade": None,
                 "strengths": computed["strengths"],
@@ -300,7 +305,7 @@ def analyze_team_with_llm(team_data: str, api_key: Optional[str] = None) -> dict
                 "llm_used": False,
             }
 
-        client = openai.OpenAI(api_key=api_key, base_url=LLM_BASE_URL)
+        client = openai.OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
         rules_prompt = f"""You are an expert Pokemon Champions doubles coach and analyst.
 You are coaching for {format_label}.
@@ -381,7 +386,7 @@ For each strength, weakness, and threat, explain WHY it matters."""
             )
             analysis_text = response.choices[0].message.content
         except openai.AuthenticationError:
-            return _degraded(computed, rule_report, "That API key was rejected. Showing the computed analysis only.")
+            return _degraded(computed, rule_report, "The server's API key was rejected. Showing the computed analysis only.")
         except openai.RateLimitError:
             return _degraded(computed, rule_report, "Free-tier rate limit reached. Showing the computed analysis only.")
         except Exception as e:
